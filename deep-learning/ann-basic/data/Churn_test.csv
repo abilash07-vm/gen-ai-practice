@@ -1,0 +1,4 @@
+RowNumber,CustomerId,Surname,CreditScore,Geography,Gender,Age,Tenure,Balance,NumOfProducts,HasCrCard,IsActiveMember,EstimatedSalary
+1,15634602,Hargrave,619,Spain,Male,42,2,0,1,1,1,101348.88
+2,15647311,Hill,608,France,Female,41,1,83807.86,1,0,1,112542.58
+3,15619304,Onio,502,France,Male,42,8,159660.8,3,1,0,113931.57
