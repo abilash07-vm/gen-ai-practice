@@ -1,0 +1,11 @@
+From: sender4@example.com
+To: learner@example.com
+Subject: Sample Email 4
+Date: Wed, 22 Apr 2026 10:04:00 +0530
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+This is sample email number 4 for LangChain email parsing experiments.
+Regards,
+Team Demo

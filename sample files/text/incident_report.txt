@@ -1,0 +1,8 @@
+Incident Report
+
+Date: 2026-04-20
+Severity: Medium
+Service: document-indexer
+Summary: The indexer skipped 37 XML files after a malformed character sequence.
+Resolution: Added fallback encoding detection and quarantine queue.
+Preventive action: Add validation before chunking.

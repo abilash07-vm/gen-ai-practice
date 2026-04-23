@@ -1,0 +1,5 @@
+Policy 4
+
+This is a sample policy document intended for retrieval practice.
+Document classification: internal
+Review cycle: annual

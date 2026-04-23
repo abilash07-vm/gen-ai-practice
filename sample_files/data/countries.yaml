@@ -1,0 +1,10 @@
+countries:
+  - code: IN
+    name: India
+    region: Asia
+  - code: US
+    name: United States
+    region: North America
+  - code: DE
+    name: Germany
+    region: Europe

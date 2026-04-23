@@ -1,0 +1,4 @@
+Book Chapter Excerpt
+
+Chapter 4 discusses information retrieval systems and how ranking quality depends on indexing,
+query understanding, document representation, and evaluation metrics such as precision and recall.

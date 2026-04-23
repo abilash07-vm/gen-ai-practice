@@ -1,0 +1,20 @@
+[
+  {
+    "sku": "SKU-100",
+    "name": "Notebook",
+    "warehouse": "WH-A",
+    "qty": 180
+  },
+  {
+    "sku": "SKU-101",
+    "name": "Marker",
+    "warehouse": "WH-A",
+    "qty": 72
+  },
+  {
+    "sku": "SKU-102",
+    "name": "Webcam",
+    "warehouse": "WH-B",
+    "qty": 15
+  }
+]

@@ -1,0 +1,5 @@
+Research Abstract
+
+Hybrid retrieval combines sparse lexical signals with dense vector representations.
+In enterprise search, hybrid retrieval often improves first-pass recall for short factual queries.
+Future work includes better reranking and source attribution.

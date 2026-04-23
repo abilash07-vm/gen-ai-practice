@@ -1,0 +1,5 @@
+ticket_id	priority	team	status	summary
+T1001	High	Platform	Open	API gateway timeout under load
+T1002	Low	Design	Closed	Icon misalignment on dashboard
+T1003	Medium	Search	Open	Ranking quality drop on short queries
+T1004	High	Security	Investigating	Expired certificate on staging

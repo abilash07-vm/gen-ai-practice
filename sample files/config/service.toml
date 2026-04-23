@@ -1,0 +1,5 @@
+name = "query-service"
+version = "0.1.0"
+[http]
+port = 8080
+timeout = 30

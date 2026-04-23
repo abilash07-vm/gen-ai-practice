@@ -1,0 +1,7 @@
+1
+00:00:00,000 --> 00:00:02,000
+Welcome to the retrieval tutorial.
+
+2
+00:00:02,100 --> 00:00:05,000
+In this lesson, we compare chunk sizes and overlaps.

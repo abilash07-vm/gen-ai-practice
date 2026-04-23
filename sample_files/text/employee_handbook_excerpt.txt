@@ -1,0 +1,5 @@
+Employee Handbook Excerpt
+
+Working hours are flexible between 8:00 AM and 7:00 PM local time.
+Employees are encouraged to document project decisions in the team wiki.
+Confidential customer data must not be copied to public repositories.

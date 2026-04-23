@@ -1,0 +1,12 @@
+2026-04-20T09:05:00 INFO service=document-indexer request_id=req-05-00 message=sample_log_event_0
+2026-04-20T09:05:15 INFO service=document-indexer request_id=req-05-01 message=sample_log_event_1
+2026-04-20T09:05:30 WARN service=document-indexer request_id=req-05-02 message=sample_log_event_2
+2026-04-20T09:05:45 INFO service=document-indexer request_id=req-05-03 message=sample_log_event_3
+2026-04-20T09:06:00 ERROR service=document-indexer request_id=req-05-04 message=sample_log_event_4
+2026-04-20T09:06:15 INFO service=document-indexer request_id=req-05-05 message=sample_log_event_5
+2026-04-20T09:06:30 INFO service=document-indexer request_id=req-05-06 message=sample_log_event_6
+2026-04-20T09:06:45 WARN service=document-indexer request_id=req-05-07 message=sample_log_event_7
+2026-04-20T09:07:00 INFO service=document-indexer request_id=req-05-08 message=sample_log_event_8
+2026-04-20T09:07:15 ERROR service=document-indexer request_id=req-05-09 message=sample_log_event_9
+2026-04-20T09:07:30 INFO service=document-indexer request_id=req-05-10 message=sample_log_event_10
+2026-04-20T09:07:45 INFO service=document-indexer request_id=req-05-11 message=sample_log_event_11
