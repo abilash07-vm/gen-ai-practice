@@ -1,0 +1,7 @@
+langchain
+langchain-ollama
+langchain-community
+ipykernel
+dotenv
+sentence_transformers
+langchain_huggingface

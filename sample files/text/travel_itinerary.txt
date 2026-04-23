@@ -1,5 +1,0 @@
-Travel Itinerary
-
-Day 1: Arrive in Bengaluru, hotel check-in, evening client dinner.
-Day 2: Office visit, architecture review, data pipeline workshop.
-Day 3: Customer demo, feedback capture, return flight.

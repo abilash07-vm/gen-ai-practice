@@ -1,6 +1,0 @@
-Meeting Transcript
-
-Asha: We need a clearer ingestion pipeline for mixed file formats.
-Rahul: Let's separate parsing, cleaning, and chunking.
-Asha: Also record file type, source path, owner, and created date.
-Rahul: That metadata will help retrieval filters later.

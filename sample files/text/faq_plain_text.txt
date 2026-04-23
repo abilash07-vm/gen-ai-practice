@@ -1,7 +1,0 @@
-FAQ
-
-Q: What is LangChain used for?
-A: It helps build applications with LLMs, tools, retrieval, and workflows.
-
-Q: Why does chunk size matter?
-A: It changes context quality, recall, and token usage.

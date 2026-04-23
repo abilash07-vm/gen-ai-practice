@@ -1,4 +1,0 @@
-loader: unstructured
-splitter: recursive
-embedding_model: text-embedding-demo
-vector_store: chroma

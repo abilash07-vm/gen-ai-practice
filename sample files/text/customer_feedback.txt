@@ -1,5 +1,0 @@
-Customer Feedback
-
-"The search is fast, but I need better filtering by date."
-"Please show the document title and page number in answers."
-"The summarization feature is useful for meeting notes."

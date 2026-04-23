@@ -1,6 +1,0 @@
-Training Schedule
-
-Week 1: Loaders and parsers
-Week 2: Chunking and embeddings
-Week 3: Retrieval and reranking
-Week 4: Agents, tools, and memory

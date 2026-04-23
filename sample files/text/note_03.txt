@@ -1,5 +1,0 @@
-Sample note 3
-
-This is a short learning note for LangChain practice.
-Topic: metadata extraction, chunking, and retrieval.
-Document id: TXT-03
