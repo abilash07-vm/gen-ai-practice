@@ -2,9 +2,6 @@ Customer Support Notes
 
 Issue categories:
 1. Login failures after password reset
-2. PDF export timing out for reports above 20 pages
+2. PDF export timing out for large reports
 3. Search returning stale cache results
-4. Users asking for dark mode in admin portal
-
-Observed pattern:
-Most login failures are caused by users reusing an old browser tab after reset.
+4. Users asking for dark mode

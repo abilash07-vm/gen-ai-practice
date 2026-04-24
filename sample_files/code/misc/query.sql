@@ -1,1 +1,1 @@
-SELECT ticket_id, status FROM tickets WHERE priority = 'High';
+SELECT * FROM tickets WHERE priority = 'High';

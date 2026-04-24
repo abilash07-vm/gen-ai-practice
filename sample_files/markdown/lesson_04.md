@@ -1,9 +1,14 @@
 # Lesson 4
 
-This markdown lesson explains a LangChain concept.
-
 ## Topic
-Chunking strategy 4
+LangChain concept 4
 
-## Example
-Use recursive splitting for long prose and header-based splitting for markdown.
+## Explanation
+Markdown lesson paragraph 4. This file is generated for LangChain learning, document loading, parsing, text splitting, embedding creation, vector indexing, retrieval, metadata extraction, semantic search, summarization, and RAG experiments. It contains structured repeated content so that the file becomes large enough for testing while still remaining meaningful for chunking and retrieval workflows. Each paragraph includes consistent language patterns that are useful for evaluating document loaders, overlap behavior, filtering, and search relevance.
+
+
+## Use Case
+- loaders
+- splitters
+- retrieval
+- RAG

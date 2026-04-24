@@ -1,20 +1,252 @@
 [
   {
-    "sku": "SKU-100",
-    "name": "Notebook",
-    "warehouse": "WH-A",
-    "qty": 180
+    "sku": "SKU-001",
+    "name": "Item 1",
+    "qty": 2
   },
   {
-    "sku": "SKU-101",
-    "name": "Marker",
-    "warehouse": "WH-A",
+    "sku": "SKU-002",
+    "name": "Item 2",
+    "qty": 4
+  },
+  {
+    "sku": "SKU-003",
+    "name": "Item 3",
+    "qty": 6
+  },
+  {
+    "sku": "SKU-004",
+    "name": "Item 4",
+    "qty": 8
+  },
+  {
+    "sku": "SKU-005",
+    "name": "Item 5",
+    "qty": 10
+  },
+  {
+    "sku": "SKU-006",
+    "name": "Item 6",
+    "qty": 12
+  },
+  {
+    "sku": "SKU-007",
+    "name": "Item 7",
+    "qty": 14
+  },
+  {
+    "sku": "SKU-008",
+    "name": "Item 8",
+    "qty": 16
+  },
+  {
+    "sku": "SKU-009",
+    "name": "Item 9",
+    "qty": 18
+  },
+  {
+    "sku": "SKU-010",
+    "name": "Item 10",
+    "qty": 20
+  },
+  {
+    "sku": "SKU-011",
+    "name": "Item 11",
+    "qty": 22
+  },
+  {
+    "sku": "SKU-012",
+    "name": "Item 12",
+    "qty": 24
+  },
+  {
+    "sku": "SKU-013",
+    "name": "Item 13",
+    "qty": 26
+  },
+  {
+    "sku": "SKU-014",
+    "name": "Item 14",
+    "qty": 28
+  },
+  {
+    "sku": "SKU-015",
+    "name": "Item 15",
+    "qty": 30
+  },
+  {
+    "sku": "SKU-016",
+    "name": "Item 16",
+    "qty": 32
+  },
+  {
+    "sku": "SKU-017",
+    "name": "Item 17",
+    "qty": 34
+  },
+  {
+    "sku": "SKU-018",
+    "name": "Item 18",
+    "qty": 36
+  },
+  {
+    "sku": "SKU-019",
+    "name": "Item 19",
+    "qty": 38
+  },
+  {
+    "sku": "SKU-020",
+    "name": "Item 20",
+    "qty": 40
+  },
+  {
+    "sku": "SKU-021",
+    "name": "Item 21",
+    "qty": 42
+  },
+  {
+    "sku": "SKU-022",
+    "name": "Item 22",
+    "qty": 44
+  },
+  {
+    "sku": "SKU-023",
+    "name": "Item 23",
+    "qty": 46
+  },
+  {
+    "sku": "SKU-024",
+    "name": "Item 24",
+    "qty": 48
+  },
+  {
+    "sku": "SKU-025",
+    "name": "Item 25",
+    "qty": 50
+  },
+  {
+    "sku": "SKU-026",
+    "name": "Item 26",
+    "qty": 52
+  },
+  {
+    "sku": "SKU-027",
+    "name": "Item 27",
+    "qty": 54
+  },
+  {
+    "sku": "SKU-028",
+    "name": "Item 28",
+    "qty": 56
+  },
+  {
+    "sku": "SKU-029",
+    "name": "Item 29",
+    "qty": 58
+  },
+  {
+    "sku": "SKU-030",
+    "name": "Item 30",
+    "qty": 60
+  },
+  {
+    "sku": "SKU-031",
+    "name": "Item 31",
+    "qty": 62
+  },
+  {
+    "sku": "SKU-032",
+    "name": "Item 32",
+    "qty": 64
+  },
+  {
+    "sku": "SKU-033",
+    "name": "Item 33",
+    "qty": 66
+  },
+  {
+    "sku": "SKU-034",
+    "name": "Item 34",
+    "qty": 68
+  },
+  {
+    "sku": "SKU-035",
+    "name": "Item 35",
+    "qty": 70
+  },
+  {
+    "sku": "SKU-036",
+    "name": "Item 36",
     "qty": 72
   },
   {
-    "sku": "SKU-102",
-    "name": "Webcam",
-    "warehouse": "WH-B",
-    "qty": 15
+    "sku": "SKU-037",
+    "name": "Item 37",
+    "qty": 74
+  },
+  {
+    "sku": "SKU-038",
+    "name": "Item 38",
+    "qty": 76
+  },
+  {
+    "sku": "SKU-039",
+    "name": "Item 39",
+    "qty": 78
+  },
+  {
+    "sku": "SKU-040",
+    "name": "Item 40",
+    "qty": 80
+  },
+  {
+    "sku": "SKU-041",
+    "name": "Item 41",
+    "qty": 82
+  },
+  {
+    "sku": "SKU-042",
+    "name": "Item 42",
+    "qty": 84
+  },
+  {
+    "sku": "SKU-043",
+    "name": "Item 43",
+    "qty": 86
+  },
+  {
+    "sku": "SKU-044",
+    "name": "Item 44",
+    "qty": 88
+  },
+  {
+    "sku": "SKU-045",
+    "name": "Item 45",
+    "qty": 90
+  },
+  {
+    "sku": "SKU-046",
+    "name": "Item 46",
+    "qty": 92
+  },
+  {
+    "sku": "SKU-047",
+    "name": "Item 47",
+    "qty": 94
+  },
+  {
+    "sku": "SKU-048",
+    "name": "Item 48",
+    "qty": 96
+  },
+  {
+    "sku": "SKU-049",
+    "name": "Item 49",
+    "qty": 98
+  },
+  {
+    "sku": "SKU-050",
+    "name": "Item 50",
+    "qty": 100
   }
 ]

@@ -1,5 +1,4 @@
 {
   "txt": "text/plain",
-  "md": "text/markdown",
-  "json": "application/json"
+  "md": "text/markdown"
 }

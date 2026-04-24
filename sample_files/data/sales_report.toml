@@ -2,9 +2,3 @@
 quarter = "Q1-2026"
 revenue = 1250000
 currency = "INR"
-
-[regions]
-south = 420000
-west = 350000
-north = 280000
-east = 200000

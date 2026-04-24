@@ -1,0 +1,10 @@
+# Case Study 15
+
+Problem:
+Improve search quality for dataset 15.
+
+Approach:
+Use better chunking, metadata enrichment, and reranking.
+
+Outcome:
+Synthetic improvement in retrieval quality.

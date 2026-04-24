@@ -1,35 +1,31 @@
-# LangChain Learning Corpus
+# LangChain Large Learning Corpus
 
-This zip contains 120+ sample files across many formats to help you learn:
+Generated on: 2026-04-23T20:11:09
 
+This dataset contains 100+ files across many formats, including both:
+- small realistic samples
+- large files for stress testing
+
+Useful for:
 - document loaders
-- text splitting
-- metadata extraction
-- chunking strategies
+- parsers
+- chunking
+- embeddings
 - vector stores
-- RAG pipelines
-- retrievers
-- filtering by source/type
-- multi-format ingestion
+- retrieval
+- filtering
+- metadata extraction
+- RAG experiments
 
-## Included categories
-- Plain text, notes, transcripts, FAQs
-- Markdown docs and wiki pages
-- Structured data: CSV, TSV, JSON, JSONL, NDJSON
-- Config files: YAML, TOML, INI, ENV, properties, conf
-- Markup: HTML, XML, SVG, LaTeX, RST
-- Code files in many languages
-- Logs and pseudo application traces
-- Email samples (.eml)
-- Office-style files: DOCX, XLSX, PPTX, PDF
+Main categories:
+- text
+- markdown
+- data
+- code
+- config
+- markup
+- logs
+- emails
+- office files
+- large files
 
-## Suggested exercises
-1. Load only text-like files and inspect metadata
-2. Compare chunking for markdown vs plain text
-3. Build a retriever over product docs + tickets
-4. Filter by extension or folder
-5. Try separate loaders for PDF/DOCX/XLSX/PPTX
-6. Create parent-child retrieval using long reports
-7. Build source-aware answers using metadata
-
-Generated on: 2026-04-23T13:57:14

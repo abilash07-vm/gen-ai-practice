@@ -1,471 +1,517 @@
-import os, json, csv, zipfile, textwrap, random, io, math
-from datetime import datetime, timedelta
+import os
+import json
+import csv
+import zipfile
+import shutil
 from pathlib import Path
+from datetime import datetime, timedelta
 
-base = Path("/mnt/data/langchain_learning_corpus")
-if base.exists():
-    import shutil
-    shutil.rmtree(base)
-base.mkdir(parents=True, exist_ok=True)
+# External libs
+from docx import Document
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from openpyxl import Workbook
+from pptx import Presentation
+from pptx.util import Inches
 
-folders = [
-    "text",
-    "markdown",
-    "data",
-    "code/python",
-    "code/javascript",
-    "code/java",
-    "code/c_cpp",
-    "code/misc",
-    "config",
-    "markup",
-    "logs",
-    "emails",
-    "docs",
-    "office",
-    "media_like",
-]
-for f in folders:
-    (base / f).mkdir(parents=True, exist_ok=True)
+# -----------------------------
+# CONFIG
+# -----------------------------
+OUTPUT_DIR = Path("langchain_large_learning_corpus")
+ZIP_NAME = "langchain_large_learning_corpus.zip"
 
-def write(path: Path, content: str):
+# Large file sizes
+LARGE_TEXT_MB = [5, 10, 20]
+LARGE_JSONL_MB = [5, 10]
+LARGE_CSV_MB = [5, 15]
+LARGE_PDF_PAGES = [100, 200]
+LARGE_DOCX_PARAGRAPHS = [800, 1500]
+LARGE_XLSX_ROWS = [10000, 25000]
+LARGE_PPTX_SLIDES = [30, 60]
+
+# -----------------------------
+# HELPERS
+# -----------------------------
+def reset_dir(path: Path):
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir(parents=True, exist_ok=True)
+
+def write_text(path: Path, content: str):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
-# README
-readme = """# LangChain Learning Corpus
+def repeat_paragraph(topic: str, idx: int) -> str:
+    return (
+        f"{topic} paragraph {idx}. "
+        f"This file is generated for LangChain learning, document loading, parsing, "
+        f"text splitting, embedding creation, vector indexing, retrieval, metadata extraction, "
+        f"semantic search, summarization, and RAG experiments. "
+        f"It contains structured repeated content so that the file becomes large enough for testing "
+        f"while still remaining meaningful for chunking and retrieval workflows. "
+        f"Each paragraph includes consistent language patterns that are useful for evaluating "
+        f"document loaders, overlap behavior, filtering, and search relevance.\n"
+    )
 
-This zip contains 120+ sample files across many formats to help you learn:
+def generate_large_text(target_mb: int, topic: str) -> str:
+    target_bytes = target_mb * 1024 * 1024
+    parts = []
+    current = 0
+    i = 1
+    while current < target_bytes:
+        para = repeat_paragraph(topic, i)
+        parts.append(para)
+        current += len(para.encode("utf-8"))
+        i += 1
+    return "".join(parts)
 
+def write_large_txt(path: Path, target_mb: int, topic: str):
+    content = generate_large_text(target_mb, topic)
+    write_text(path, content)
+
+def write_large_jsonl(path: Path, target_mb: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    target_bytes = target_mb * 1024 * 1024
+    current = 0
+    i = 1
+    with open(path, "w", encoding="utf-8") as f:
+        while current < target_bytes:
+            obj = {
+                "id": i,
+                "topic": topic,
+                "title": f"{topic} record {i}",
+                "summary": f"Synthetic record {i} for large-scale LangChain testing.",
+                "content": repeat_paragraph(topic, i) * 3,
+                "tags": ["langchain", "rag", "retrieval", "chunking", f"batch-{i % 10}"],
+                "owner": f"user_{i % 25}",
+                "priority": ["low", "medium", "high"][i % 3],
+                "active": i % 2 == 0,
+            }
+            line = json.dumps(obj, ensure_ascii=False) + "\n"
+            f.write(line)
+            current += len(line.encode("utf-8"))
+            i += 1
+
+def write_large_csv(path: Path, target_mb: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    target_bytes = target_mb * 1024 * 1024
+    current = 0
+    i = 1
+    header = ["id", "name", "category", "description", "status", "owner", "region", "score"]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        current += len((",".join(header) + "\n").encode("utf-8"))
+        while current < target_bytes:
+            row = [
+                i,
+                f"{topic} Item {i}",
+                f"Category-{i % 12}",
+                repeat_paragraph(topic, i).replace("\n", " ").strip(),
+                "active" if i % 2 == 0 else "inactive",
+                f"user_{i % 50}",
+                f"region_{i % 5}",
+                round((i % 100) / 10, 2),
+            ]
+            line = ",".join(map(lambda x: str(x).replace(",", " "), row)) + "\n"
+            f.write(line)
+            current += len(line.encode("utf-8"))
+            i += 1
+
+def write_large_pdf(path: Path, pages: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    c = canvas.Canvas(str(path), pagesize=A4)
+    w, h = A4
+
+    para_index = 1
+    for p in range(1, pages + 1):
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, h - 50, f"{topic} - Page {p}")
+
+        c.setFont("Helvetica", 10)
+        y = h - 80
+        while y > 50:
+            line = repeat_paragraph(topic, para_index)[:130]
+            c.drawString(50, y, line)
+            y -= 14
+            para_index += 1
+
+        c.showPage()
+
+    c.save()
+
+def write_large_docx(path: Path, paragraphs: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc = Document()
+    doc.add_heading(topic, 0)
+    doc.add_paragraph("Large DOCX generated for LangChain loader and parser testing.")
+    for i in range(1, paragraphs + 1):
+        doc.add_paragraph(repeat_paragraph(topic, i) * 2)
+    doc.save(path)
+
+def write_large_xlsx(path: Path, rows: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "LargeData"
+    ws.append(["id", "title", "description", "owner", "status", "score"])
+    for i in range(1, rows + 1):
+        ws.append([
+            i,
+            f"{topic} Record {i}",
+            repeat_paragraph(topic, i).replace("\n", " ")[:500],
+            f"user_{i % 100}",
+            "open" if i % 2 else "closed",
+            i % 100
+        ])
+    wb.save(path)
+
+def write_large_pptx(path: Path, slides_count: int, topic: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    prs = Presentation()
+    for i in range(1, slides_count + 1):
+        slide = prs.slides.add_slide(prs.slide_layouts[1])
+        slide.shapes.title.text = f"{topic} Slide {i}"
+        slide.placeholders[1].text = (
+            f"{repeat_paragraph(topic, i)[:300]}\n\n"
+            f"Highlights:\n"
+            f"- LangChain testing\n"
+            f"- Chunking and retrieval\n"
+            f"- Metadata extraction\n"
+            f"- Synthetic learning content"
+        )
+    prs.save(path)
+
+def create_zip(source_dir: Path, zip_path: Path):
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file_path in sorted(source_dir.rglob("*")):
+            if file_path.is_file():
+                zf.write(file_path, arcname=str(file_path.relative_to(source_dir)))
+
+# -----------------------------
+# GENERATORS
+# -----------------------------
+def create_readme(base: Path):
+    content = f"""# LangChain Large Learning Corpus
+
+Generated on: {datetime.now().isoformat(timespec="seconds")}
+
+This dataset contains 100+ files across many formats, including both:
+- small realistic samples
+- large files for stress testing
+
+Useful for:
 - document loaders
-- text splitting
-- metadata extraction
-- chunking strategies
+- parsers
+- chunking
+- embeddings
 - vector stores
-- RAG pipelines
-- retrievers
-- filtering by source/type
-- multi-format ingestion
+- retrieval
+- filtering
+- metadata extraction
+- RAG experiments
 
-## Included categories
-- Plain text, notes, transcripts, FAQs
-- Markdown docs and wiki pages
-- Structured data: CSV, TSV, JSON, JSONL, NDJSON
-- Config files: YAML, TOML, INI, ENV, properties, conf
-- Markup: HTML, XML, SVG, LaTeX, RST
-- Code files in many languages
-- Logs and pseudo application traces
-- Email samples (.eml)
-- Office-style files: DOCX, XLSX, PPTX, PDF
+Main categories:
+- text
+- markdown
+- data
+- code
+- config
+- markup
+- logs
+- emails
+- office files
+- large files
 
-## Suggested exercises
-1. Load only text-like files and inspect metadata
-2. Compare chunking for markdown vs plain text
-3. Build a retriever over product docs + tickets
-4. Filter by extension or folder
-5. Try separate loaders for PDF/DOCX/XLSX/PPTX
-6. Create parent-child retrieval using long reports
-7. Build source-aware answers using metadata
+"""
+    write_text(base / "README.md", content)
 
-Generated on: {generated}
-""".format(generated=datetime.now().isoformat(timespec="seconds"))
-write(base / "README.md", readme)
-
-# Text files
-text_files = {
-    "customer_support_notes.txt": """Customer Support Notes
+def create_small_text_files(base: Path):
+    folder = base / "text"
+    samples = {
+        "customer_support_notes.txt": """Customer Support Notes
 
 Issue categories:
 1. Login failures after password reset
-2. PDF export timing out for reports above 20 pages
+2. PDF export timing out for large reports
 3. Search returning stale cache results
-4. Users asking for dark mode in admin portal
-
-Observed pattern:
-Most login failures are caused by users reusing an old browser tab after reset.
+4. Users asking for dark mode
 """,
-    "product_requirements.txt": """Product Requirements Summary
+        "meeting_transcript.txt": """Meeting Transcript
 
-Project: Knowledge Assistant
-Target users: internal operations teams
-Core features:
-- ingest PDFs, DOCX, and webpages
-- semantic search over policies
-- answer generation with citations
-- source filters by department
-Non-functional:
-- response time under 4 seconds for top 5 answers
-- support documents up to 50 MB
-""",
-    "meeting_transcript.txt": """Meeting Transcript
-
-Asha: We need a clearer ingestion pipeline for mixed file formats.
+Asha: We need clearer ingestion for mixed file formats.
 Rahul: Let's separate parsing, cleaning, and chunking.
-Asha: Also record file type, source path, owner, and created date.
-Rahul: That metadata will help retrieval filters later.
+Asha: Also capture source metadata.
 """,
-    "incident_report.txt": """Incident Report
+        "incident_report.txt": """Incident Report
 
-Date: 2026-04-20
+Date: 2026-04-23
 Severity: Medium
 Service: document-indexer
-Summary: The indexer skipped 37 XML files after a malformed character sequence.
-Resolution: Added fallback encoding detection and quarantine queue.
-Preventive action: Add validation before chunking.
+Summary: Some XML files failed to parse due to malformed encoding.
 """,
-    "employee_handbook_excerpt.txt": """Employee Handbook Excerpt
+        "faq_plain_text.txt": """FAQ
 
-Working hours are flexible between 8:00 AM and 7:00 PM local time.
-Employees are encouraged to document project decisions in the team wiki.
-Confidential customer data must not be copied to public repositories.
+Q: What is chunk overlap?
+A: It preserves context between adjacent chunks.
+
+Q: Why store metadata?
+A: It helps filtering and citation.
 """,
-    "faq_plain_text.txt": """FAQ
+        "product_requirements.txt": """Product Requirements Summary
 
-Q: What is LangChain used for?
-A: It helps build applications with LLMs, tools, retrieval, and workflows.
-
-Q: Why does chunk size matter?
-A: It changes context quality, recall, and token usage.
+Project: Knowledge Assistant
+Core features:
+- ingest multiple document types
+- semantic retrieval
+- citations
+- filtering
 """,
-    "research_abstract.txt": """Research Abstract
+    }
+    for name, content in samples.items():
+        write_text(folder / name, content)
 
-Hybrid retrieval combines sparse lexical signals with dense vector representations.
-In enterprise search, hybrid retrieval often improves first-pass recall for short factual queries.
-Future work includes better reranking and source attribution.
-""",
-    "shopping_list_dataset.txt": """Shopping List Dataset
+    for i in range(1, 21):
+        write_text(
+            folder / f"note_{i:02d}.txt",
+            f"Sample text note {i}\n\n{repeat_paragraph('LangChain note', i) * 3}"
+        )
 
-milk
-bread
-coffee
-notebook
-hdmi cable
-wireless mouse
-standing desk mat
-""",
-    "travel_itinerary.txt": """Travel Itinerary
+def create_markdown_files(base: Path):
+    folder = base / "markdown"
+    for i in range(1, 21):
+        content = f"""# Lesson {i}
 
-Day 1: Arrive in Bengaluru, hotel check-in, evening client dinner.
-Day 2: Office visit, architecture review, data pipeline workshop.
-Day 3: Customer demo, feedback capture, return flight.
-""",
-    "book_chapter_excerpt.txt": """Book Chapter Excerpt
+## Topic
+LangChain concept {i}
 
-Chapter 4 discusses information retrieval systems and how ranking quality depends on indexing,
-query understanding, document representation, and evaluation metrics such as precision and recall.
-""",
-    "customer_feedback.txt": """Customer Feedback
+## Explanation
+{repeat_paragraph('Markdown lesson', i)}
 
-"The search is fast, but I need better filtering by date."
-"Please show the document title and page number in answers."
-"The summarization feature is useful for meeting notes."
-""",
-    "training_schedule.txt": """Training Schedule
+## Use Case
+- loaders
+- splitters
+- retrieval
+- RAG
+"""
+        write_text(folder / f"lesson_{i:02d}.md", content)
 
-Week 1: Loaders and parsers
-Week 2: Chunking and embeddings
-Week 3: Retrieval and reranking
-Week 4: Agents, tools, and memory
-""",
-}
-for name, content in text_files.items():
-    write(base / "text" / name, content)
+def create_data_files(base: Path):
+    folder = base / "data"
 
-# More text variants
-for i in range(1, 9):
-    write(base / "text" / f"note_{i:02d}.txt", f"Sample note {i}\n\nThis is a short learning note for LangChain practice.\nTopic: metadata extraction, chunking, and retrieval.\nDocument id: TXT-{i:02d}\n")
+    # CSV
+    with open(folder / "products.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["product_id", "name", "category", "price", "stock"])
+        for i in range(1, 101):
+            writer.writerow([f"P{i:03d}", f"Product {i}", f"Category {i % 10}", i * 100, i * 5])
 
-# Markdown files
-markdown_docs = {
-    "architecture_overview.md": """# Architecture Overview
+    # TSV
+    with open(folder / "support_tickets.tsv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f, delimiter="\t")
+        writer.writerow(["ticket_id", "priority", "status", "summary"])
+        for i in range(1, 101):
+            writer.writerow([f"T{i:04d}", ["Low", "Medium", "High"][i % 3], "Open", f"Ticket summary {i}"])
 
-## Components
-- loader
-- parser
-- splitter
-- embedder
-- vector store
-- retriever
-- answer chain
+    # JSON / JSONL / NDJSON / YAML / TOML / XML
+    write_text(folder / "inventory.json", json.dumps([
+        {"sku": f"SKU-{i:03d}", "name": f"Item {i}", "qty": i * 2}
+        for i in range(1, 51)
+    ], indent=2))
 
-## Notes
-Use metadata fields like `source`, `owner`, `team`, and `doc_type`.
-""",
-    "api_reference.md": """# API Reference
+    write_text(folder / "users.jsonl", "\n".join(
+        json.dumps({"id": i, "name": f"user_{i}", "role": ["admin", "viewer", "editor"][i % 3]})
+        for i in range(1, 101)
+    ))
 
-## POST /ingest
-Uploads a document and triggers parsing.
+    write_text(folder / "events.ndjson", "\n".join(
+        json.dumps({"event_id": i, "event": "query", "user": f"user_{i % 10}"})
+        for i in range(1, 101)
+    ))
 
-## POST /query
-Accepts user question and optional filters.
-
-## GET /health
-Returns service health and dependency status.
-""",
-    "release_notes.md": """# Release Notes
-
-## v1.2.0
-- added JSONL loader
-- improved markdown heading splitting
-- fixed bad UTF-8 fallback
-
-## v1.1.0
-- initial retrieval pipeline
-""",
-    "onboarding_guide.md": """# Onboarding Guide
-
-1. Clone the repo
-2. Create a virtual environment
-3. Install dependencies
-4. Add environment variables
-5. Run the ingestion script
-""",
-    "team_wiki_page.md": """# Team Wiki
-
-## Naming convention
-Use lowercase filenames with underscores.
-
-## Documentation rule
-Add summary, owner, date, and tags at the top of every design note.
-""",
-    "prompt_patterns.md": """# Prompt Patterns
-
-## Retrieval QA
-Answer only from the provided context.
-
-## Summarization
-Summarize with bullet points, risks, and next steps.
-
-## Extraction
-Return JSON with stable keys and null for unknown values.
-""",
-    "dataset_card.md": """# Dataset Card
-
-**Name:** Support Tickets Lite  
-**Language:** English  
-**Rows:** 500 synthetic examples  
-**Use cases:** classification, semantic search, summarization
-""",
-    "knowledge_base_article.md": """# Resetting Two-Factor Authentication
-
-If a user loses access to their authenticator device, verify identity through the support checklist.
-After approval, disable the existing MFA method and enforce re-enrollment on next login.
-""",
-}
-for name, content in markdown_docs.items():
-    write(base / "markdown" / name, content)
-for i in range(1, 9):
-    write(base / "markdown" / f"lesson_{i:02d}.md", f"# Lesson {i}\n\nThis markdown lesson explains a LangChain concept.\n\n## Topic\nChunking strategy {i}\n\n## Example\nUse recursive splitting for long prose and header-based splitting for markdown.\n")
-
-# Structured data
-products = [
-    ["product_id","name","category","price","stock","rating"],
-    ["P001","Wireless Mouse","Accessories",799,120,4.4],
-    ["P002","Mechanical Keyboard","Accessories",2499,75,4.6],
-    ["P003","USB-C Hub","Accessories",1599,63,4.1],
-    ["P004","Laptop Stand","Office",1899,40,4.5],
-    ["P005","Noise Cancelling Headphones","Audio",6999,22,4.7],
-]
-with open(base / "data" / "products.csv", "w", newline="", encoding="utf-8") as f:
-    csv.writer(f).writerows(products)
-
-tickets = [
-    ["ticket_id","priority","team","status","summary"],
-    ["T1001","High","Platform","Open","API gateway timeout under load"],
-    ["T1002","Low","Design","Closed","Icon misalignment on dashboard"],
-    ["T1003","Medium","Search","Open","Ranking quality drop on short queries"],
-    ["T1004","High","Security","Investigating","Expired certificate on staging"],
-]
-with open(base / "data" / "support_tickets.tsv", "w", newline="", encoding="utf-8") as f:
-    csv.writer(f, delimiter="\t").writerows(tickets)
-
-inventory = [
-    {"sku":"SKU-100","name":"Notebook","warehouse":"WH-A","qty":180},
-    {"sku":"SKU-101","name":"Marker","warehouse":"WH-A","qty":72},
-    {"sku":"SKU-102","name":"Webcam","warehouse":"WH-B","qty":15},
-]
-write(base / "data" / "inventory.json", json.dumps(inventory, indent=2))
-write(base / "data" / "users.jsonl", "\n".join(json.dumps(x) for x in [
-    {"user_id":1,"name":"Anita","role":"admin","active":True},
-    {"user_id":2,"name":"Kiran","role":"analyst","active":True},
-    {"user_id":3,"name":"Leela","role":"viewer","active":False},
-]))
-write(base / "data" / "events.ndjson", "\n".join(json.dumps(x) for x in [
-    {"ts":"2026-04-20T09:10:00","event":"login","user":"Anita"},
-    {"ts":"2026-04-20T09:12:00","event":"upload","user":"Kiran"},
-    {"ts":"2026-04-20T09:18:00","event":"query","user":"Anita"},
-]))
-write(base / "data" / "metrics.xml", """<?xml version="1.0" encoding="UTF-8"?>
-<metrics>
-  <service name="ingest">
-    <latency_p95_ms>840</latency_p95_ms>
-    <error_rate>0.02</error_rate>
-  </service>
-  <service name="query">
-    <latency_p95_ms>620</latency_p95_ms>
-    <error_rate>0.01</error_rate>
-  </service>
-</metrics>
-""")
-write(base / "data" / "countries.yaml", """countries:
+    write_text(folder / "countries.yaml", """countries:
   - code: IN
     name: India
     region: Asia
   - code: US
     name: United States
     region: North America
-  - code: DE
-    name: Germany
-    region: Europe
 """)
-write(base / "data" / "sales_report.toml", """[summary]
+
+    write_text(folder / "sales_report.toml", """[summary]
 quarter = "Q1-2026"
 revenue = 1250000
 currency = "INR"
-
-[regions]
-south = 420000
-west = 350000
-north = 280000
-east = 200000
 """)
-for i in range(1, 11):
-    write(base / "data" / f"sample_data_{i:02d}.json", json.dumps({
-        "id": i,
-        "title": f"Sample data record {i}",
-        "tags": ["langchain", "learning", f"set-{(i%3)+1}"],
-        "score": round(0.5 + i/20, 2)
-    }, indent=2))
 
-# Config files
-config_files = {
-    ".env": "OPENAI_API_KEY=demo-key\nAPP_ENV=development\nVECTOR_DB=chroma\nTOP_K=5\n",
-    "settings.ini": "[app]\nname = rag_demo\nmode = local\n\n[retrieval]\nchunk_size = 800\noverlap = 120\n",
-    "application.properties": "server.port=8000\napp.name=knowledge-assistant\nretriever.topK=5\n",
-    "docker.conf": "workers=2\nthreads=4\nlog_level=info\n",
-    "pipeline.yaml": "loader: unstructured\nsplitter: recursive\nembedding_model: text-embedding-demo\nvector_store: chroma\n",
-    "service.toml": 'name = "query-service"\nversion = "0.1.0"\n[http]\nport = 8080\ntimeout = 30\n',
-    "parser_rules.conf": "allow_pdf=true\nallow_docx=true\nallow_html=true\nmax_file_size_mb=50\n",
-    "mappings.json": json.dumps({"txt":"text/plain","md":"text/markdown","json":"application/json"}, indent=2),
-    "feature_flags.yml": "flags:\n  enable_reranker: true\n  enable_citations: true\n  enable_feedback: false\n",
-    "airflow_like.cfg": "[scheduler]\nmax_threads = 4\n\n[logging]\nlevel = INFO\n",
-}
-for name, content in config_files.items():
-    write(base / "config" / name, content)
-for i in range(1, 11):
-    write(base / "config" / f"profile_{i:02d}.env", f"PROFILE=profile_{i:02d}\nCACHE_TTL={i*10}\nENABLE_TRACE={'true' if i%2 else 'false'}\n")
+    write_text(folder / "metrics.xml", """<?xml version="1.0" encoding="UTF-8"?>
+<metrics>
+  <service name="ingest">
+    <latency_p95_ms>840</latency_p95_ms>
+  </service>
+</metrics>
+""")
 
-# Markup and misc parsable files
-markup_files = {
-    "landing_page.html": """<!doctype html>
+    for i in range(1, 16):
+        write_text(folder / f"sample_data_{i:02d}.json", json.dumps({
+            "id": i,
+            "title": f"Sample record {i}",
+            "content": repeat_paragraph("JSON sample", i),
+            "score": i / 10
+        }, indent=2))
+
+def create_config_files(base: Path):
+    folder = base / "config"
+    config_files = {
+        ".env": "OPENAI_API_KEY=demo-key\nAPP_ENV=development\nTOP_K=5\n",
+        "settings.ini": "[app]\nname=rag_demo\nmode=local\n",
+        "application.properties": "server.port=8000\napp.name=knowledge-assistant\n",
+        "pipeline.yaml": "loader: unstructured\nsplitter: recursive\nvector_store: chroma\n",
+        "service.toml": 'name="query-service"\nversion="0.1.0"\n',
+        "parser_rules.conf": "allow_pdf=true\nallow_docx=true\nmax_file_size_mb=100\n",
+        "feature_flags.yml": "flags:\n  enable_reranker: true\n  enable_citations: true\n",
+        "mappings.json": json.dumps({"txt": "text/plain", "md": "text/markdown"}, indent=2),
+    }
+    for name, content in config_files.items():
+        write_text(folder / name, content)
+
+    for i in range(1, 16):
+        write_text(folder / f"profile_{i:02d}.env", f"PROFILE=profile_{i:02d}\nCACHE_TTL={i*10}\n")
+
+def create_markup_files(base: Path):
+    folder = base / "markup"
+
+    write_text(folder / "landing_page.html", """<!doctype html>
 <html><head><title>Knowledge Portal</title></head>
-<body>
-<h1>Knowledge Portal</h1>
-<p>This portal hosts policies, guides, and troubleshooting notes.</p>
-<ul><li>Search</li><li>Browse</li><li>Summarize</li></ul>
-</body></html>""",
-    "faq_page.htm": """<html><body><h2>FAQ</h2><p>How do I reset my password? Use the account security page.</p></body></html>""",
-    "catalog.xml": """<?xml version="1.0"?><catalog><book id="b1"><title>IR Basics</title></book><book id="b2"><title>LLM Systems</title></book></catalog>""",
-    "diagram.svg": """<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120">
-<rect x="10" y="10" width="100" height="40" fill="#eaeaea" stroke="#333"/>
-<text x="25" y="35" font-size="14">Loader</text>
-<rect x="145" y="10" width="100" height="40" fill="#eaeaea" stroke="#333"/>
-<text x="160" y="35" font-size="14">Splitter</text>
-<rect x="280" y="10" width="100" height="40" fill="#eaeaea" stroke="#333"/>
-<text x="295" y="35" font-size="14">Retriever</text>
-</svg>""",
-    "paper.tex": r"""\documentclass{article}
+<body><h1>Knowledge Portal</h1><p>Portal for policies and notes.</p></body></html>""")
+
+    write_text(folder / "catalog.xml", """<?xml version="1.0"?>
+<catalog><book id="b1"><title>IR Basics</title></book></catalog>""")
+
+    write_text(folder / "diagram.svg", """<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100">
+<rect x="10" y="10" width="80" height="30" fill="#ddd" stroke="#333"/>
+<text x="25" y="30">Loader</text>
+</svg>""")
+
+    write_text(folder / "paper.tex", r"""\documentclass{article}
 \begin{document}
-\section*{Sample LaTeX Note}
-This is a small document for parser experiments.
+\section*{Sample LaTeX}
+This is a sample file.
 \end{document}
-""",
-    "guide.rst": """Guide
+""")
+
+    write_text(folder / "guide.rst", """Guide
 =====
 
 Overview
 --------
 
-This is a reStructuredText sample for documentation ingestion.
-""",
-    "notes.xhtml": """<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml"><body><p>XHTML sample.</p></body></html>""",
-}
-for name, content in markup_files.items():
-    write(base / "markup" / name, content)
-for i in range(1, 9):
-    write(base / "markup" / f"web_fragment_{i:02d}.html", f"<html><body><h3>Fragment {i}</h3><p>Sample HTML fragment for ingestion test {i}.</p></body></html>")
+Sample RST document.
+""")
 
-# Logs
-for i in range(1, 13):
-    lines = []
-    start = datetime(2026, 4, 20, 9, 0, 0) + timedelta(minutes=i)
-    for j in range(12):
-        ts = (start + timedelta(seconds=j*15)).isoformat()
-        level = ["INFO", "INFO", "WARN", "INFO", "ERROR"][j % 5]
-        lines.append(f"{ts} {level} service=document-indexer request_id=req-{i:02d}-{j:02d} message=sample_log_event_{j}")
-    write(base / "logs" / f"app_log_{i:02d}.log", "\n".join(lines) + "\n")
+    for i in range(1, 16):
+        write_text(folder / f"web_fragment_{i:02d}.html",
+                   f"<html><body><h3>Fragment {i}</h3><p>{repeat_paragraph('HTML fragment', i)}</p></body></html>")
 
-# Emails
-for i in range(1, 9):
-    eml = f"""From: sender{i}@example.com
+def create_log_files(base: Path):
+    folder = base / "logs"
+    start = datetime(2026, 4, 23, 9, 0, 0)
+
+    for i in range(1, 16):
+        lines = []
+        t = start + timedelta(minutes=i)
+        for j in range(1, 51):
+            ts = (t + timedelta(seconds=j * 10)).isoformat()
+            level = ["INFO", "WARN", "ERROR"][j % 3]
+            lines.append(f"{ts} {level} service=document-indexer request_id=req-{i:02d}-{j:03d} event=sample_event_{j}")
+        write_text(folder / f"app_log_{i:02d}.log", "\n".join(lines))
+
+def create_email_files(base: Path):
+    folder = base / "emails"
+    for i in range(1, 16):
+        eml = f"""From: sender{i}@example.com
 To: learner@example.com
 Subject: Sample Email {i}
-Date: Wed, 22 Apr 2026 10:0{i}:00 +0530
+Date: Wed, 23 Apr 2026 10:{i:02d}:00 +0530
 MIME-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 
 Hello,
-This is sample email number {i} for LangChain email parsing experiments.
+This is sample email number {i} for LangChain learning.
 Regards,
-Team Demo
+Demo Team
 """
-    write(base / "emails" / f"sample_email_{i:02d}.eml", eml)
+        write_text(folder / f"sample_email_{i:02d}.eml", eml)
 
-# Code samples
-code_map = {
-    ("code/python", "app.py"): """from fastapi import FastAPI\napp = FastAPI()\n\n@app.get('/health')\ndef health():\n    return {'status': 'ok'}\n""",
-    ("code/python", "chunking_demo.py"): """def split_text(text, size=200):\n    return [text[i:i+size] for i in range(0, len(text), size)]\n""",
-    ("code/python", "retriever_stub.py"): """class Retriever:\n    def __init__(self, store):\n        self.store = store\n\n    def search(self, query):\n        return self.store.get(query, [])\n""",
-    ("code/javascript", "server.js"): """const http = require('http');\nhttp.createServer((req,res)=>{res.end('ok');}).listen(3000);\n""",
-    ("code/javascript", "utils.js"): """export function normalize(text){ return text.trim().toLowerCase(); }\n""",
-    ("code/java", "Main.java"): """public class Main {\n  public static void main(String[] args){\n    System.out.println(\"Hello LangChain\");\n  }\n}\n""",
-    ("code/java", "Ticket.java"): """public class Ticket {\n  private String id;\n  private String status;\n}\n""",
-    ("code/c_cpp", "main.c"): """#include <stdio.h>\nint main(){ printf(\"hello\\n\"); return 0; }\n""",
-    ("code/c_cpp", "sort.cpp"): """#include <vector>\n#include <algorithm>\nint main(){ std::vector<int> v={3,1,2}; std::sort(v.begin(), v.end()); }\n""",
-    ("code/misc", "script.sh"): "#!/bin/bash\necho \"ingest started\"\n",
-    ("code/misc", "build.bat"): "@echo off\necho Building sample project\n",
-    ("code/misc", "deploy.ps1"): "Write-Output \"Deploying demo stack\"\n",
-    ("code/misc", "app.go"): "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"hello\") }\n",
-    ("code/misc", "analyze.rb"): "puts 'ruby sample'\n",
-    ("code/misc", "index.php"): "<?php echo 'php sample'; ?>\n",
-    ("code/misc", "service.kt"): "fun main(){ println(\"kotlin sample\") }\n",
-    ("code/misc", "ios.swift"): "print(\"swift sample\")\n",
-    ("code/misc", "analysis.r"): "x <- c(1,2,3)\nmean(x)\n",
-    ("code/misc", "style.css"): "body { font-family: Arial; margin: 16px; }\n",
-    ("code/misc", "query.sql"): "SELECT ticket_id, status FROM tickets WHERE priority = 'High';\n",
+def create_code_files(base: Path):
+    code_samples = {
+        ("code/python", "app.py"): """from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+""",
+        ("code/python", "chunking_demo.py"): """def split_text(text, size=200):
+    return [text[i:i+size] for i in range(0, len(text), size)]
+""",
+        ("code/javascript", "server.js"): """const http = require('http');
+http.createServer((req, res) => { res.end('ok'); }).listen(3000);
+""",
+        ("code/java", "Main.java"): """public class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello LangChain");
+  }
 }
-for (folder, name), content in code_map.items():
-    write(base / folder / name, content)
+""",
+        ("code/c_cpp", "main.c"): """#include <stdio.h>
+int main() { printf("hello\\n"); return 0; }
+""",
+        ("code/c_cpp", "sort.cpp"): """#include <vector>
+#include <algorithm>
+int main() { std::vector<int> v={3,1,2}; std::sort(v.begin(), v.end()); }
+""",
+        ("code/misc", "script.sh"): "#!/bin/bash\necho \"ingest started\"\n",
+        ("code/misc", "build.bat"): "@echo off\necho Building project\n",
+        ("code/misc", "deploy.ps1"): "Write-Output \"Deploying demo stack\"\n",
+        ("code/misc", "app.go"): "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"hello\") }\n",
+        ("code/misc", "analyze.rb"): "puts 'ruby sample'\n",
+        ("code/misc", "index.php"): "<?php echo 'php sample'; ?>\n",
+        ("code/misc", "service.kt"): "fun main(){ println(\"kotlin sample\") }\n",
+        ("code/misc", "ios.swift"): "print(\"swift sample\")\n",
+        ("code/misc", "analysis.r"): "x <- c(1,2,3)\nmean(x)\n",
+        ("code/misc", "query.sql"): "SELECT * FROM tickets WHERE priority = 'High';\n",
+        ("code/misc", "style.css"): "body { font-family: Arial; margin: 16px; }\n",
+    }
 
-# More code variety
-extra_code = [
-    ("code/python", f"module_{i:02d}.py", f"def func_{i}():\n    return 'module {i}'\n") for i in range(1, 9)
-] + [
-    ("code/javascript", f"widget_{i:02d}.ts", f"export const item{i}: string = 'widget {i}';\n") for i in range(1, 7)
-] + [
-    ("code/misc", f"tool_{i:02d}.scala", f"object Tool{i} extends App {{ println(\"scala {i}\") }}\n") for i in range(1, 4)
-]
-for folder, name, content in extra_code:
-    write(base / folder / name, content)
+    for (folder, name), content in code_samples.items():
+        write_text(base / folder / name, content)
 
-# Docs folder
-for i in range(1, 11):
-    write(base / "docs" / f"case_study_{i:02d}.md", f"# Case Study {i}\n\nProblem: improve search quality for dataset {i}.\nApproach: better chunking, metadata enrichment, and reranking.\nOutcome: simulated improvement in first relevant hit.\n")
-for i in range(1, 7):
-    write(base / "docs" / f"policy_{i:02d}.txt", f"Policy {i}\n\nThis is a sample policy document intended for retrieval practice.\nDocument classification: internal\nReview cycle: annual\n")
+    for i in range(1, 21):
+        write_text(base / "code/python" / f"module_{i:02d}.py", f"def func_{i}():\n    return 'module {i}'\n")
+        write_text(base / "code/javascript" / f"widget_{i:02d}.ts", f"export const item{i}: string = 'widget {i}';\n")
 
-# Media-like captions/subtitles
-write(base / "media_like" / "video_subtitles.srt", """1
+def create_docs_files(base: Path):
+    folder = base / "docs"
+    for i in range(1, 21):
+        content = f"""# Case Study {i}
+
+Problem:
+Improve search quality for dataset {i}.
+
+Approach:
+Use better chunking, metadata enrichment, and reranking.
+
+Outcome:
+Synthetic improvement in retrieval quality.
+"""
+        write_text(folder / f"case_study_{i:02d}.md", content)
+
+def create_media_like_files(base: Path):
+    folder = base / "media_like"
+    write_text(folder / "video_subtitles.srt", """1
 00:00:00,000 --> 00:00:02,000
 Welcome to the retrieval tutorial.
 
@@ -473,7 +519,8 @@ Welcome to the retrieval tutorial.
 00:00:02,100 --> 00:00:05,000
 In this lesson, we compare chunk sizes and overlaps.
 """)
-write(base / "media_like" / "meeting_captions.vtt", """WEBVTT
+
+    write_text(folder / "meeting_captions.vtt", """WEBVTT
 
 00:00:00.000 --> 00:00:02.000
 Today we review document ingestion metrics.
@@ -482,130 +529,140 @@ Today we review document ingestion metrics.
 Next, we discuss metadata normalization.
 """)
 
-# Office files
-from docx import Document
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from openpyxl import Workbook
-from pptx import Presentation
-from pptx.util import Inches
+def create_small_office_files(base: Path):
+    folder = base / "office"
 
-# DOCX
-doc = Document()
-doc.add_heading("Sample Project Proposal", 0)
-doc.add_paragraph("This DOCX file is included for loader and parser experiments.")
-doc.add_heading("Objectives", level=1)
-for item in [
-    "Ingest mixed document formats",
-    "Store metadata for filtering",
-    "Enable semantic retrieval with citations",
-]:
-    doc.add_paragraph(item, style="List Bullet")
-doc.add_heading("Notes", level=1)
-doc.add_paragraph("Use this file to test DOCX loading, text extraction, and metadata capture.")
-doc.save(base / "office" / "sample_proposal.docx")
+    # DOCX
+    doc = Document()
+    doc.add_heading("Sample Project Proposal", 0)
+    doc.add_paragraph("This DOCX file is included for loader experiments.")
+    doc.add_heading("Objectives", level=1)
+    doc.add_paragraph("Ingest mixed formats", style="List Bullet")
+    doc.add_paragraph("Store metadata", style="List Bullet")
+    doc.add_paragraph("Enable retrieval with citations", style="List Bullet")
+    doc.save(folder / "sample_proposal.docx")
 
-# Another DOCX
-doc2 = Document()
-doc2.add_heading("Employee Policy Memo", 0)
-doc2.add_paragraph("Hybrid work is supported subject to team approval and security guidelines.")
-doc2.add_paragraph("Sensitive documents must remain inside approved storage systems.")
-doc2.save(base / "office" / "policy_memo.docx")
+    # XLSX
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Sales"
+    ws.append(["Month", "Revenue", "Cost", "Profit"])
+    ws.append(["Jan", 120000, 80000, 40000])
+    ws.append(["Feb", 140000, 90000, 50000])
+    wb.save(folder / "quarterly_sales.xlsx")
 
-# XLSX
-wb = Workbook()
-ws = wb.active
-ws.title = "Sales"
-ws.append(["Month", "Revenue", "Cost", "Profit"])
-rows = [
-    ("Jan", 120000, 80000, 40000),
-    ("Feb", 140000, 90000, 50000),
-    ("Mar", 135000, 88000, 47000),
-    ("Apr", 150000, 93000, 57000),
-]
-for r in rows:
-    ws.append(r)
-wb.save(base / "office" / "quarterly_sales.xlsx")
+    # PPTX
+    prs = Presentation()
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Knowledge Assistant Demo"
+    slide.placeholders[1].text = "Mixed-format ingestion\nSemantic retrieval\nSource citations"
+    prs.save(folder / "demo_deck.pptx")
 
-wb2 = Workbook()
-ws2 = wb2.active
-ws2.title = "Tickets"
-ws2.append(["Ticket", "Priority", "Status", "Owner"])
-for r in [["T1","High","Open","Anita"],["T2","Low","Closed","Kiran"],["T3","Medium","Open","Leela"]]:
-    ws2.append(r)
-wb2.save(base / "office" / "ticket_tracker.xlsx")
+    # PDF
+    pdf_path = folder / "sample_report.pdf"
+    c = canvas.Canvas(str(pdf_path), pagesize=A4)
+    w, h = A4
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(72, h - 72, "Sample PDF Report")
+    c.setFont("Helvetica", 11)
+    y = h - 110
+    for line in [
+        "This PDF is a small sample for LangChain learning.",
+        "It can be used for PDF loader testing.",
+        "It contains simple plain text lines."
+    ]:
+        c.drawString(72, y, line)
+        y -= 18
+    c.showPage()
+    c.save()
 
-# PPTX
-prs = Presentation()
-slide = prs.slides.add_slide(prs.slide_layouts[1])
-slide.shapes.title.text = "Knowledge Assistant Demo"
-slide.placeholders[1].text = "Mixed-format ingestion\nSemantic retrieval\nSource citations"
-slide2 = prs.slides.add_slide(prs.slide_layouts[5])
-slide2.shapes.title.text = "Pipeline"
-tx = slide2.shapes.add_textbox(Inches(1), Inches(1.5), Inches(8), Inches(3))
-tf = tx.text_frame
-tf.text = "Loader -> Splitter -> Embeddings -> Vector Store -> Retriever -> Answer"
-prs.save(base / "office" / "demo_deck.pptx")
+def create_large_files(base: Path):
+    folder = base / "large_files"
 
-prs2 = Presentation()
-slide = prs2.slides.add_slide(prs2.slide_layouts[0])
-slide.shapes.title.text = "Weekly Review"
-slide.placeholders[1].text = "Synthetic slide deck for LangChain practice"
-prs2.save(base / "office" / "weekly_review.pptx")
+    # Large TXT
+    for size in LARGE_TEXT_MB:
+        write_large_txt(folder / f"large_text_{size}mb.txt", size, f"Large text {size}MB")
 
-# PDF
-pdf_path = base / "office" / "sample_report.pdf"
-c = canvas.Canvas(str(pdf_path), pagesize=A4)
-w, h = A4
-c.setFont("Helvetica-Bold", 16)
-c.drawString(72, h - 72, "Sample PDF Report")
-c.setFont("Helvetica", 11)
-lines = [
-    "This PDF is a simple sample for LangChain learning.",
-    "It contains plain text content across a few lines.",
-    "You can use it to test PDF loaders and chunking behavior.",
-    "Consider extracting metadata such as title and file path.",
-]
-y = h - 110
-for line in lines:
-    c.drawString(72, y, line)
-    y -= 18
-c.showPage()
-c.save()
+    # Large JSONL
+    for size in LARGE_JSONL_MB:
+        write_large_jsonl(folder / f"large_jsonl_{size}mb.jsonl", size, f"Large JSONL {size}MB")
 
-pdf_path2 = base / "office" / "troubleshooting_note.pdf"
-c = canvas.Canvas(str(pdf_path2), pagesize=A4)
-c.setFont("Helvetica-Bold", 14)
-c.drawString(72, h - 72, "Troubleshooting Note")
-c.setFont("Helvetica", 11)
-for idx, line in enumerate([
-    "Symptom: answers returned without citations.",
-    "Cause: retriever metadata was not preserved after chunking.",
-    "Fix: carry source id, title, and page markers into chunks.",
-]):
-    c.drawString(72, h - 110 - idx*18, line)
-c.showPage()
-c.save()
+    # Large CSV
+    for size in LARGE_CSV_MB:
+        write_large_csv(folder / f"large_csv_{size}mb.csv", size, f"Large CSV {size}MB")
 
-# Create manifest
-all_files = []
-for p in sorted(base.rglob("*")):
-    if p.is_file():
-        all_files.append(str(p.relative_to(base)))
-write(base / "manifest.txt", "\n".join(all_files) + "\n")
+    # Large PDF
+    for pages in LARGE_PDF_PAGES:
+        write_large_pdf(folder / f"large_pdf_{pages}_pages.pdf", pages, f"Large PDF {pages} pages")
 
-# Zip
-zip_path = Path("/mnt/data/langchain_learning_corpus_125_files.zip")
-if zip_path.exists():
-    zip_path.unlink()
+    # Large DOCX
+    for paras in LARGE_DOCX_PARAGRAPHS:
+        write_large_docx(folder / f"large_docx_{paras}_paras.docx", paras, f"Large DOCX {paras} paras")
 
-with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+    # Large XLSX
+    for rows in LARGE_XLSX_ROWS:
+        write_large_xlsx(folder / f"large_xlsx_{rows}_rows.xlsx", rows, f"Large XLSX {rows} rows")
+
+    # Large PPTX
+    for slides in LARGE_PPTX_SLIDES:
+        write_large_pptx(folder / f"large_pptx_{slides}_slides.pptx", slides, f"Large PPTX {slides} slides")
+
+def create_manifest(base: Path):
+    files = []
     for p in sorted(base.rglob("*")):
         if p.is_file():
-            zf.write(p, arcname=str(p.relative_to(base)))
+            files.append(str(p.relative_to(base)))
+    write_text(base / "manifest.txt", "\n".join(files) + "\n")
+    return len(files)
 
-print(f"Created: {zip_path}")
-print(f"Total files: {len(all_files)}")
-print("Sample files:")
-for item in all_files[:20]:
-    print("-", item)
+# -----------------------------
+# MAIN
+# -----------------------------
+def main():
+    reset_dir(OUTPUT_DIR)
+
+    # Create folders
+    folders = [
+        "text",
+        "markdown",
+        "data",
+        "config",
+        "markup",
+        "logs",
+        "emails",
+        "docs",
+        "media_like",
+        "office",
+        "large_files",
+        "code/python",
+        "code/javascript",
+        "code/java",
+        "code/c_cpp",
+        "code/misc",
+    ]
+    for folder in folders:
+        (OUTPUT_DIR / folder).mkdir(parents=True, exist_ok=True)
+
+    create_readme(OUTPUT_DIR)
+    create_small_text_files(OUTPUT_DIR)
+    create_markdown_files(OUTPUT_DIR)
+    create_data_files(OUTPUT_DIR)
+    create_config_files(OUTPUT_DIR)
+    create_markup_files(OUTPUT_DIR)
+    create_log_files(OUTPUT_DIR)
+    create_email_files(OUTPUT_DIR)
+    create_code_files(OUTPUT_DIR)
+    create_docs_files(OUTPUT_DIR)
+    create_media_like_files(OUTPUT_DIR)
+    create_small_office_files(OUTPUT_DIR)
+    create_large_files(OUTPUT_DIR)
+
+    total_files = create_manifest(OUTPUT_DIR)
+    create_zip(OUTPUT_DIR, Path(ZIP_NAME))
+
+    print(f"Created folder: {OUTPUT_DIR.resolve()}")
+    print(f"Created zip: {Path(ZIP_NAME).resolve()}")
+    print(f"Total files generated: {total_files}")
+
+if __name__ == "__main__":
+    main()

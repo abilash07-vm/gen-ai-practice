@@ -1,12 +1,8 @@
 Product Requirements Summary
 
 Project: Knowledge Assistant
-Target users: internal operations teams
 Core features:
-- ingest PDFs, DOCX, and webpages
-- semantic search over policies
-- answer generation with citations
-- source filters by department
-Non-functional:
-- response time under 4 seconds for top 5 answers
-- support documents up to 50 MB
+- ingest multiple document types
+- semantic retrieval
+- citations
+- filtering

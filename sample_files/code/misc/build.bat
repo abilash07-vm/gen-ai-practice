@@ -1,2 +1,2 @@
 @echo off
-echo Building sample project
+echo Building project

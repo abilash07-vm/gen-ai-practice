@@ -1,4 +1,3 @@
 flags:
   enable_reranker: true
   enable_citations: true
-  enable_feedback: false

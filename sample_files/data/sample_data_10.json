@@ -1,10 +1,6 @@
 {
   "id": 10,
-  "title": "Sample data record 10",
-  "tags": [
-    "langchain",
-    "learning",
-    "set-2"
-  ],
+  "title": "Sample record 10",
+  "content": "JSON sample paragraph 10. This file is generated for LangChain learning, document loading, parsing, text splitting, embedding creation, vector indexing, retrieval, metadata extraction, semantic search, summarization, and RAG experiments. It contains structured repeated content so that the file becomes large enough for testing while still remaining meaningful for chunking and retrieval workflows. Each paragraph includes consistent language patterns that are useful for evaluating document loaders, overlap behavior, filtering, and search relevance.\n",
   "score": 1.0
 }
