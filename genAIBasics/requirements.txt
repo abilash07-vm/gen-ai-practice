@@ -3,7 +3,9 @@ langchain-ollama
 langchain-community
 langchain_huggingface
 langchain_groq
+
 langserve
+sse_starlette
 
 ipykernel
 dotenv
