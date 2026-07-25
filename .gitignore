@@ -1,3 +1,5 @@
 deep-learning/ann-basic/annenv/*
 genAIBasics/embedings/.env
 genAIBasics/.env
+.vscode/*
+.vscode/settings.json
