@@ -3,3 +3,4 @@ genAIBasics/embedings/.env
 genAIBasics/.env
 .vscode/*
 .vscode/settings.json
+**/.env
