@@ -3,6 +3,7 @@ langchain-google-genai
 langchain-groq
 langchain-core
 langchain-community
+langchain-tavily
 
 langgraph
 langsmith
