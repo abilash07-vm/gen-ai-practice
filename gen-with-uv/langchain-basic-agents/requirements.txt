@@ -4,5 +4,8 @@ langchain-groq
 langchain-core
 langchain-community
 
+langgraph
+langsmith
+
 python-dotenv
 ipykernel
